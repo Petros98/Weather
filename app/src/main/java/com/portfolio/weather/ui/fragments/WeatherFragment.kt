@@ -67,10 +67,6 @@ class WeatherFragment : Fragment(), LocationListener {
     private fun observe(){
         viewModel.error.observe(viewLifecycleOwner){
             this.showSnackbar(it)
-//            Snackbar.make(
-//                    binding.root, it,
-//                    Snackbar.LENGTH_SHORT
-//            ).show()
         }
     }
 
@@ -114,8 +110,6 @@ class WeatherFragment : Fragment(), LocationListener {
                         )
                     else
                         this.showSnackbar(getText(R.string.no_internet).toString())
-
-//                    Snackbar.make(binding.root, getText(R.string.no_internet), Snackbar.LENGTH_SHORT).show()
                 }
                 else -> {
                     Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).also {
