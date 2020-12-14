@@ -20,10 +20,10 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.snackbar.Snackbar
 import com.portfolio.weather.R
 import com.portfolio.weather.data.util.hasNetwork
 import com.portfolio.weather.databinding.FragmentWeatherBinding
+import com.portfolio.weather.ui.showSnackbar
 import com.portfolio.weather.utils.ConnectivityReceiver
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -40,8 +40,8 @@ class WeatherFragment : Fragment(), LocationListener {
     private lateinit var connReceiver: ConnectivityReceiver
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+            inflater: LayoutInflater, container: ViewGroup?,
+            savedInstanceState: Bundle?
     ): View {
         binding = FragmentWeatherBinding.inflate(inflater)
         return binding.root
@@ -66,10 +66,11 @@ class WeatherFragment : Fragment(), LocationListener {
     
     private fun observe(){
         viewModel.error.observe(viewLifecycleOwner){
-            Snackbar.make(
-                binding.root, it,
-                Snackbar.LENGTH_SHORT
-            ).show()
+            this.showSnackbar(it)
+//            Snackbar.make(
+//                    binding.root, it,
+//                    Snackbar.LENGTH_SHORT
+//            ).show()
         }
     }
 
@@ -97,22 +98,24 @@ class WeatherFragment : Fragment(), LocationListener {
                         != PackageManager.PERMISSION_GRANTED -> {
                     activity?.let { activity ->
                         ActivityCompat.requestPermissions(
-                            activity,
-                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                            locationRequestCode
+                                activity,
+                                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                                locationRequestCode
                         )
                     }
                 }
                 locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) -> {
                     if (context.hasNetwork())
                         locationManager.requestLocationUpdates(
-                            LocationManager.GPS_PROVIDER,
-                            5000,
-                            5f,
-                            this
+                                LocationManager.GPS_PROVIDER,
+                                5000,
+                                5f,
+                                this
                         )
                     else
-                        Snackbar.make(binding.root,getText(R.string.no_internet), Snackbar.LENGTH_SHORT).show()
+                        this.showSnackbar(getText(R.string.no_internet).toString())
+
+//                    Snackbar.make(binding.root, getText(R.string.no_internet), Snackbar.LENGTH_SHORT).show()
                 }
                 else -> {
                     Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).also {
@@ -138,6 +141,14 @@ class WeatherFragment : Fragment(), LocationListener {
         activity?.unregisterReceiver(connReceiver)
     }
 
+    override fun onProviderEnabled(provider: String) {
+        this.showSnackbar("enabled $provider")
+    }
+
+    override fun onProviderDisabled(provider: String) {
+        this.showSnackbar("disabled $provider")
+    }
+
     override fun onLocationChanged(location: Location) {
         lifecycleScope.launch {
             viewModel.getByLocation(location)
@@ -145,9 +156,9 @@ class WeatherFragment : Fragment(), LocationListener {
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
+            requestCode: Int,
+            permissions: Array<out String>,
+            grantResults: IntArray
     ) {
         if (requestCode == locationRequestCode) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
